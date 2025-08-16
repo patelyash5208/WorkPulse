@@ -1,8 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
 
-const timeController = require("../controllers/timeController");
+import { clockIn } from "../controllers/timeController.js";
 
-router.post("/clock-in", timeController.clockIn);
+router.post("/clock-in", clockIn);
 
-module.exports = router;
+export default router;
