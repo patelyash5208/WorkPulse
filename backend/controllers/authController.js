@@ -1,46 +1,77 @@
-const User = require("../models/user");
-const jwt = require("jsonwebtoken");
+import User from "../models/user.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-exports.register = async (req, res) => {
-  const { name, email, password } = req.body;
-
+// ✅ Register a new user
+export const register = async (req, res) => {
   try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: "Email already registered" });
+    const { name, email, password } = req.body;
 
-    const user = new User({ name, email, password });
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already registered" });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Save new user
+    const user = new User({ name, email, password: hashedPassword });
     await user.save();
 
-    res.status(201).json({ message: "User registered successfully" });
+    return res
+      .status(201)
+      .json({ success: true, message: "User registered successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Register Error:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-exports.login = async (req, res) => {
-  const { email, password } = req.body;
-
+// ✅ Login user
+export const login = async (req, res) => {
   try {
+    const { email, password } = req.body;
+
+    // Find user
     const user = await User.findOne({ email });
     if (!user)
-      return res.status(400).json({ message: "Invalid email or password" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid email or password" });
+    // Validate password
+    const validPass = await bcrypt.compare(password, user.password);
+    if (!validPass)
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid password" });
 
-    const payload = { id: user._id, name: user.name, email: user.email };
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
-    // Fix JWT signing: `jwt.sign(payload, secret, options)`
-    const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token, // frontend needs this for auth
+      user: { id: user._id, name: user.name, email: user.email },
     });
-
-    res.json({ token, user: payload });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Login Error:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
+};
+
+// ✅ Logout user (stateless, just frontend removes token)
+export const logout = async (req, res) => {
+  return res
+    .status(200)
+    .json({ success: true, message: "Logged out successfully" });
 };

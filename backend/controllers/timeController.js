@@ -3,127 +3,91 @@ import Time from "../models/time.js";
 // ✅ Clock In
 export const clockIn = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.user._id;
 
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User ID is required" });
-    }
-
-    // Optional: Prevent multiple clock-ins in the same day
+    // Prevent multiple clock-ins today
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const existingClockIn = await Time.findOne({
+    const existing = await Time.findOne({
       userId,
       clockIn: { $gte: startOfDay, $lte: endOfDay },
     });
 
-    if (existingClockIn) {
+    if (existing) {
       return res
         .status(400)
-        .json({ success: false, message: "User already clocked in today" });
+        .json({ success: false, message: "Already clocked in today" });
     }
 
-    const newClockIn = new Time({
-      userId,
-      clockIn: new Date(),
-    });
+    const entry = new Time({ userId, clockIn: new Date() });
+    await entry.save();
 
-    await newClockIn.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Clock In successful",
-      data: newClockIn,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.log("Clock In entry created:", entry); // debug log
+    res.status(201).json({ success: true, data: entry });
+  } catch (err) {
+    console.error("Clock In Error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
+// ✅ View all records for logged-in user
 export const viewClockRecords = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user._id;
+    const records = await Time.find({ userId }).sort({ clockIn: -1 });
 
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User ID is required" });
-    }
-
-    // Fetch all clock records and populate user details
-    const records = await Time.find({ userId })
-      .sort({ clockIn: -1 })
-      .populate("userId", "name email"); // only fetch name and email
-
+    console.log("Fetched records:", records); // debug log
     res.status(200).json({ success: true, data: records });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (err) {
+    console.error("View Records Error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// ✅ Update a clock record (Clock In or Clock Out)
+// ✅ Update record (Clock Out)
 export const updateTimeEntry = async (req, res) => {
   try {
     const { recordId } = req.params;
-    const { clockIn, clockOut } = req.body;
+    const record = await Time.findOne({ _id: recordId, userId: req.user._id });
 
-    if (!recordId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Record ID is required" });
-    }
-
-    const record = await Time.findById(recordId);
-    if (!record) {
+    if (!record)
       return res
         .status(404)
         .json({ success: false, message: "Record not found" });
-    }
 
-    // Update fields if provided
-    if (clockIn) record.clockIn = new Date(clockIn);
-    if (clockOut) record.clockOut = new Date(clockOut);
+    if (req.body.clockIn) record.clockIn = new Date(req.body.clockIn);
+    if (req.body.clockOut) record.clockOut = new Date(req.body.clockOut);
 
     await record.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Time entry updated successfully",
-      data: record,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.log("Record updated:", record); // debug log
+    res.status(200).json({ success: true, data: record });
+  } catch (err) {
+    console.error("Update Record Error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// ✅ Delete a clock record
+// ✅ Delete record
 export const deleteTimeEntry = async (req, res) => {
   try {
     const { recordId } = req.params;
+    const deleted = await Time.findOneAndDelete({
+      _id: recordId,
+      userId: req.user._id,
+    });
 
-    if (!recordId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Record ID is required" });
-    }
-
-    const deleted = await Time.findByIdAndDelete(recordId);
-
-    if (!deleted) {
+    if (!deleted)
       return res
         .status(404)
         .json({ success: false, message: "Record not found" });
-    }
 
-    res
-      .status(200)
-      .json({ success: true, message: "Clock record deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.log("Record deleted:", deleted); // debug log
+    res.status(200).json({ success: true, message: "Deleted successfully" });
+  } catch (err) {
+    console.error("Delete Record Error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

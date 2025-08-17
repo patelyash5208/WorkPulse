@@ -19,5 +19,7 @@ const timeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Time = mongoose.model("Time", timeSchema);
+// Avoid OverwriteModelError
+const Time = mongoose.models.Time || mongoose.model("Time", timeSchema);
+
 export default Time;

@@ -1,9 +1,15 @@
-const express = require("express");
+import express from "express";
+import { register, login } from "../controllers/authController.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
 
-const authController = require("../controllers/authController");
+router.post("/register", register);
+router.post("/login", login);
 
-router.post("/register", authController.register);
-router.post("/login", authController.login);
+// Example of a protected route
+router.get("/me", verifyToken, (req, res) => {
+  res.json({ user: req.user });
+});
 
-module.exports = router;
+export default router;

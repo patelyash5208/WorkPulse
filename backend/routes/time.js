@@ -1,6 +1,5 @@
 import express from "express";
-const router = express.Router();
-
+import { verifyToken } from "../middleware/authMiddleware.js";
 import {
   clockIn,
   viewClockRecords,
@@ -8,9 +7,11 @@ import {
   deleteTimeEntry,
 } from "../controllers/timeController.js";
 
-router.post("/clock-in", clockIn);
-router.get("/records/:userId", viewClockRecords);
-router.put("/records/:recordId", updateTimeEntry);
-router.delete("/records/:recordId", deleteTimeEntry);
+const router = express.Router();
+
+router.post("/clock-in", verifyToken, clockIn);
+router.get("/records", verifyToken, viewClockRecords);
+router.put("/records/:recordId", verifyToken, updateTimeEntry);
+router.delete("/records/:recordId", verifyToken, deleteTimeEntry);
 
 export default router;
