@@ -65,3 +65,38 @@ export const viewClockRecords = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// ✅ Update a clock record (Clock In or Clock Out)
+export const updateTimeEntry = async (req, res) => {
+  try {
+    const { recordId } = req.params;
+    const { clockIn, clockOut } = req.body;
+
+    if (!recordId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Record ID is required" });
+    }
+
+    const record = await Time.findById(recordId);
+    if (!record) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Record not found" });
+    }
+
+    // Update fields if provided
+    if (clockIn) record.clockIn = new Date(clockIn);
+    if (clockOut) record.clockOut = new Date(clockOut);
+
+    await record.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Time entry updated successfully",
+      data: record,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
