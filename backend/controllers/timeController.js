@@ -44,3 +44,24 @@ export const clockIn = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const viewClockRecords = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID is required" });
+    }
+
+    // Fetch all clock records and populate user details
+    const records = await Time.find({ userId })
+      .sort({ clockIn: -1 })
+      .populate("userId", "name email"); // only fetch name and email
+
+    res.status(200).json({ success: true, data: records });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
