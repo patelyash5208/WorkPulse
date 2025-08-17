@@ -1,15 +1,44 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/login", {
+        email,
+        password,
+      });
+
+      // Save token and user info separately for clarity
+      const userData = {
+        token: res.data.token,
+        user: res.data.user,
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      alert("Login successful!");
+      navigate("/clock"); // redirect to Clock page
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Login failed");
+    }
+  };
+
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#F5F7FA",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        background: "#F5F7FA",
         padding: "20px",
       }}
     >
@@ -17,63 +46,34 @@ function Login() {
         style={{
           maxWidth: "400px",
           width: "100%",
-          background: "#ffffff",
+          background: "#fff",
           padding: "30px",
           borderRadius: "12px",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
         }}
       >
-        <h2
-          style={{
-            marginBottom: "25px",
-            color: "#2E3A59",
-            textAlign: "center",
-          }}
-        >
-          Login
-        </h2>
-        <form>
+        <h2 style={{ textAlign: "center", marginBottom: "25px" }}>Login</h2>
+        <form onSubmit={handleLogin}>
           <input
             type="email"
             placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
             className="form-control mb-3"
-            style={{ padding: "12px", fontSize: "16px" }}
           />
           <input
             type="password"
             placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
             className="form-control mb-4"
-            style={{ padding: "12px", fontSize: "16px" }}
           />
-          <button
-            type="submit"
-            className="btn btn-primary w-100"
-            style={{
-              backgroundColor: "#1E90FF",
-              border: "none",
-              padding: "12px",
-              fontSize: "18px",
-            }}
-          >
+          <button type="submit" className="btn btn-primary w-100">
             Login
           </button>
         </form>
-        <p
-          className="mt-4"
-          style={{ textAlign: "center", color: "#5A7184", fontSize: "14px" }}
-        >
-          Don't have an account?{" "}
-          <Link
-            to="/register"
-            style={{
-              color: "#1E90FF",
-              textDecoration: "none",
-              fontWeight: "500",
-            }}
-          >
-            Register
-          </Link>
-        </p>
       </div>
     </div>
   );

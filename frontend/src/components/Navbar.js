@@ -1,12 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navbar, Nav, Container } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function AppNavbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) setUser(JSON.parse(savedUser));
+
+    const handleStorageChange = () => {
+      const updatedUser = localStorage.getItem("user");
+      setUser(updatedUser ? JSON.parse(updatedUser) : null);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
   };
 
   return (
@@ -14,34 +30,16 @@ function AppNavbar() {
       bg="dark"
       variant="dark"
       expand="lg"
-      style={{ borderBottom: "3px solid #1E90FF" }} // Blue bottom border accent
+      style={{ borderBottom: "3px solid #1E90FF" }}
     >
       <Container>
         <Navbar.Brand
           as={Link}
           to="/"
-          style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          style={{ fontWeight: "700", fontSize: "1.4rem", color: "#1E90FF" }}
         >
-          {/* Simple clock SVG */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="28"
-            height="28"
-            fill="#1E90FF"
-            className="bi bi-clock"
-            viewBox="0 0 16 16"
-          >
-            <path d="M8 3.5a.5.5 0 0 1 .5.5v3.25l2.5 1.5a.5.5 0 0 1-.5.866L8 7.5V4a.5.5 0 0 1 .5-.5z" />
-            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm0-1A7 7 0 1 1 8 1a7 7 0 0 1 0 14z" />
-          </svg>
-
-          <span
-            style={{ fontWeight: "700", fontSize: "1.4rem", color: "#1E90FF" }}
-          >
-            WorkPulse
-          </span>
+          WorkPulse
         </Navbar.Brand>
-
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
@@ -53,16 +51,19 @@ function AppNavbar() {
             </Nav.Link>
           </Nav>
           <Nav>
-            {!isLoggedIn ? (
+            {!user ? (
+              <Nav.Link as={Link} to="/login" style={{ color: "#FAFAFA" }}>
+                Login
+              </Nav.Link>
+            ) : (
               <>
-                <Nav.Link as={Link} to="/login" style={{ color: "#FAFAFA" }}>
-                  Login
+                <span style={{ color: "#FAFAFA", marginRight: "10px" }}>
+                  Hi, {user.name}
+                </span>
+                <Nav.Link onClick={handleLogout} style={{ color: "#FAFAFA" }}>
+                  Logout
                 </Nav.Link>
               </>
-            ) : (
-              <Nav.Link onClick={handleLogout} style={{ color: "#FAFAFA" }}>
-                Logout
-              </Nav.Link>
             )}
           </Nav>
         </Navbar.Collapse>
