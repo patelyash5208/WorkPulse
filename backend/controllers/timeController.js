@@ -100,3 +100,30 @@ export const updateTimeEntry = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// ✅ Delete a clock record
+export const deleteTimeEntry = async (req, res) => {
+  try {
+    const { recordId } = req.params;
+
+    if (!recordId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Record ID is required" });
+    }
+
+    const deleted = await Time.findByIdAndDelete(recordId);
+
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Record not found" });
+    }
+
+    res
+      .status(200)
+      .json({ success: true, message: "Clock record deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
