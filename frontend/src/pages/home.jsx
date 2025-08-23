@@ -15,7 +15,7 @@ function HomePage() {
   }, [navigate]);
 
   if (!user) return null; // or a loading spinner
-  // just the widgets to show
+  // just the widgets to show and check pipeline work
   return (
     <div
       style={{
