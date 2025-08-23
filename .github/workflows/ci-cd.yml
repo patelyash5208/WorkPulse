@@ -1,35 +1,33 @@
 name: Backend CI
 
-# 1. Define the trigger
 on:
   push:
     branches:
-      - main
+      - main # Trigger CI on pushes to the main branch
 
-# 2. Define the jobs
 jobs:
   test:
-    # 3. Job name, environment, runner, matrix
     name: Run Tests
     runs-on: self-hosted
+
     strategy:
       matrix:
-        node-version: [22]
+        node-version: [22] # Test on multiple Node.js versions
+
     environment: MONGO_URI
 
     steps:
-      # 3a. Checkout repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # 4. Setup Node.js
+      # Set up Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
 
-      # 5. Print environment secrets (for debugging)
-      - name: Print Env Secrets
+      - name: Print Env Secret
+
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -39,11 +37,9 @@ jobs:
           echo "Secret 2 is: $JWT_SECRET"
           echo "Secret 3 is: $PORT"
 
-      # 6. Stop running services in AWS
-      - name: Stop PM2 Services
-        run: pm2 stop all
+      - run: pm2 stop all
 
-      # 7. Install backend dependencies
+      # Install dependencies for backend
       - name: Install Backend Dependencies
         working-directory: ./backend
         run: |
@@ -51,7 +47,7 @@ jobs:
           yarn --version
           yarn install
 
-      # 8. Install frontend dependencies and build
+      # Install dependencies for frontend
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
@@ -60,7 +56,7 @@ jobs:
           yarn install
           yarn run build
 
-      # 9. Run backend tests
+      # Run backend tests
       - name: Run Backend Tests
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -69,21 +65,12 @@ jobs:
         working-directory: ./backend
         run: npm test
 
-      # 10. Install dependencies using npm ci
-      - name: Clean Install Backend Dependencies
-        working-directory: ./backend
-        run: npm ci
-
-      # 11. Create .env file and add secrets (for production)
-      - name: Add Production Secrets
-        working-directory: ./backend
-        run: |
+      - run: npm ci
+      - run: |
+          cd ./backend
           touch .env
           echo "${{ secrets.PROD }}" > .env
 
-      # 12. Start and restart PM2 services
-      - name: Start PM2 Services
-        run: pm2 start all
+      - run: pm2 start all
 
-      - name: Restart PM2 Services
-        run: pm2 restart all
+      - run: pm2 restart all
