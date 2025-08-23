@@ -15,7 +15,7 @@ function HomePage() {
   }, [navigate]);
 
   if (!user) return null; // or a loading spinner
-
+  // just the widgets to show
   return (
     <div
       style={{
