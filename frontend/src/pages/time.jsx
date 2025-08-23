@@ -20,7 +20,7 @@ function Time() {
   const fetchEntries = async () => {
     try {
       const saved = JSON.parse(localStorage.getItem("user"));
-      const res = await axios.get("http://localhost:5000/api/records", {
+      const res = await axios.get("http://54.252.243.5:5000/api/records", {
         headers: { Authorization: `Bearer ${saved.token}` },
       });
 
@@ -45,7 +45,7 @@ function Time() {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/clock-in",
+        "http://54.252.243.5:5000/api/clock-in",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -70,7 +70,7 @@ function Time() {
     try {
       const openEntry = entries.find((e) => !e.clockOut);
       const res = await axios.put(
-        `http://localhost:5000/api/records/${openEntry._id}`,
+        `http://54.252.243.5:5000/api/records/${openEntry._id}`,
         { clockOut: new Date() },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -91,7 +91,7 @@ function Time() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/records/${id}`, {
+      await axios.delete(`http://54.252.243.5:5000/api/records/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEntries(entries.filter((e) => e._id !== id));

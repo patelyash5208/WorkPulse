@@ -19,7 +19,7 @@ function Register() {
     setMessage("");
 
     try {
-      await axios.post("http://localhost:5000/api/auth/register", {
+      await axios.post("http://54.252.243.5:5000/api/auth/register", {
         name,
         email,
         password,
